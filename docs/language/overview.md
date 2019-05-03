@@ -19,6 +19,13 @@ The Bosque language derives from a combination of [TypeScript](https://www.types
   - [0.12 Errors and Checks](#0.12-Errors-and-Checks)
   - [0.13 Atomic Constructors and Factories](#0.13-Atomic-Constructors-and-Factories)
   - [0.14 Synthesis Blocks](#0.14-Synthesis-Blocks)
+  - [0.15 Code Style](#0.15-Code-Style)
+    - [0.15.1 Brackets Position](#0.15.1-Brackets-Position)
+    - [0.15.2 Naming Rules](#0.15.2-Naming-Rules)
+    - [0.15.3 Spacing Rules](#0.15.3-Spacing-Rules)
+    - [0.15.4 Colon Rules](#0.15.4-Colon-Rules)
+    - [0.15.5 Method Arguments](#0.15.5-Method-Arguments)
+    - [0.15.6 If Statements](#0.15.6-If-Statements)
 - [1 Type System](#1-Type-System)
   - [1.1 Nominal Types](#1.1-Nominal-Types)
   - [1.2 Structural Types](#1.2-Structural-Types)
@@ -292,6 +299,196 @@ With this design the need to pass data up through super calls is eliminated as t
 ## <a name="0.14-Synthesis-Blocks"></a>0.14 Synthesis Blocks
 
 **[NOT IMPLEMENTED YET]**
+
+## <a name="0.15-Code-Style"></a>0.15 Code Style
+
+Code Style is an important part of the language. Code Style allows you to align the style of writing code. This allows you to avoid problems when reading the code and the extra errors associated with it.
+In this part of the documentation for the language are examples of code style, how to format some constructions and common errors.
+
+__This documentation was written based on the source code in the repository in the core.bsq and collection.bsq files. This documentation may not be complete, but I think that we will finish it closer to the first alpha version.__
+
+If in doubt, the following rules are used by default:
+
+### <a name="0.15.1-Brackets-Position"></a>0.15.1 Brackets Position
+From the position of the brackets, the readability of the entire code can vary greatly, especially if different styles are used everywhere, we recommend using the recommended style of brackets:
+
+To open a block, put a bracket on the line in which you declare the method.
+To close a block, put a bracket on a new line.
+
+##### Do:
+```
+function foo(...) {  
+    // code here
+}
+```
+
+##### Don't:
+
+```
+function foo(...) 
+{
+    // code here
+}
+```
+
+### <a name="0.15.2-Naming-Rules"></a>0.15.2 Naming Rules
+Names of methods and variables and fields start with an lower case letter and use camel humps:
+
+##### Do:
+```
+function foo(...) { ... }
+
+    // or 
+
+var! fooVariable = 1;
+```
+
+##### Don't:
+
+```
+function Foo(...) { ... }
+
+    // or
+
+var! FooVariable = 1;
+```
+
+Names of types start with an upper case letter:
+
+##### Do:
+
+```
+String
+
+    // or
+
+Alignment
+```
+##### Don't:
+
+```
+string
+
+    // or
+
+alignment
+```
+
+### <a name="0.15.3-Spacing-Rules"></a>0.15.3 Tabulation and Spacing
+Use an indent of 4 spaces or tabulation as 4 spaces
+
+##### Do:
+
+```
+function foo(...) {
+    bar();
+}
+```
+
+##### Don't:
+
+```
+function foo(...) {
+  bar();
+}
+```
+
+### <a name="0.15.4-Colon-Rules"></a>0.15.4 Colon
+If a colon is placed between the entity and the type, then the space before colon is omitted:
+
+##### Do:
+
+```
+function foo(...): Int { ... }
+```
+
+##### Don't:
+
+```
+function foo(...) : Int { ... }
+```
+
+### <a name="0.15.5-Method-Arguments"></a>0.15.5 Method Arguments
+Methods with a small number of arguments can be written on one line:
+
+##### Do:
+
+```
+function foo(name: String, id: Int) { ... }
+```
+
+##### Don't:
+
+```
+function foo(name: String, id: Int, year: Int, number: Int) { ... }
+```
+
+Methods with longer signatures must be formatted so that each parameter is located on a new line.:
+
+##### Do:
+
+```
+function foo(
+    name: String,
+    id: Int,
+    year: Int,
+    number: Int
+): Int {
+    ...
+}
+```
+
+##### Don't:
+
+```
+function foo(name: String, id: Int, year: Int, number: Int): Int {
+    ...
+}
+
+    // or
+
+function foo(name: String,
+            id: Int,
+            year: Int,
+            number: Int): Int {
+    ...
+}
+```
+
+### <a name="0.15.6-If-Statements"></a>0.15.6 If Statements
+The rules are the same as in the ([Brackets Position](#0.15.1-Brackets-Position)), only the else block is added. Below is an example of how to write and how not to.
+
+##### Do:
+
+```
+if(x == none || x == 0) {
+    y = 0;
+}
+else {
+    y = (x > 0) ? 1 : -1;
+}
+```
+
+##### Don't:
+
+```
+if(x == none || x == 0) {
+    y = 0;
+} else {
+    y = (x > 0) ? 1 : -1;
+}
+
+    // or
+
+if(x == none || x == 0) 
+{
+    y = 0;
+} 
+else 
+{
+    y = (x > 0) ? 1 : -1;
+}
+```
 
 # <a name="1-Type-System"></a>1 Type System
 
@@ -640,14 +837,14 @@ The result of this inverted constructor logic is that _only_ the arguments neede
 Lambda constructors in the Bosque language combine a code definition for the lambda body with a variable _copy_ semantics for closure captured variables on lambda creation. The body definition can be either an expression or a statement block. In the case of ambiguity the body is preferentially parsed as a statement block.
 
 ```none
-var f = fn(): Int => { return 1; }             //No arguments statement block body
-var g = fn(): Int => 1                          //No arguments statement expression body
-var h = fn(x: Int): Int => x                    //One required argument
-var k = fn(x: Int, y?: Int): Int => @{a=x, b=y} //One required and one optional argument
+var f = fn(): Int => { return 1; }               //No arguments statement block body
+var g = fn(): Int => 1;                          //No arguments statement expression body
+var h = fn(x: Int): Int => x;                    //One required argument
+var k = fn(x: Int, y?: Int): Int => @{a=x, b=y}; //One required and one optional argument
 
 var c = 1;
 var fc = fn(): Int => c; //Captured variable c
-var rc = fc()            //Result is 1
+var rc = fc();           //Result is 1
 
 var! m = 1;
 var fm = fn(): Int => m; //Captured variable - always copied
@@ -715,7 +912,7 @@ Examples of these include:
 var t = @[ 1, 2, 3 ];
 
 t[0]         //1
-t?[1]        //1
+t?[0]        //1
 t[101]       //none
 t@[1]        //@[2]
 t@[2, 0]     //@[3, 1]
@@ -1111,19 +1308,19 @@ true ==> none          //false
 Bosque provides specific none-coalescing operations, `?|` and `?&`, as opposed to truthy based coalescing that overloads the logical and/or operators.
 
 ```none
-function default(x?: Int, y?: Int) : Int {
+function defaultValue(x?: Int, y?: Int) : Int {
     return (x ?| 0) + (y ?| 0); //default on none
 }
-default(1, 1) //2
-default(1)    //1
-default()     //0
+defaultValue(1, 1) //2
+defaultValue(1)    //1
+defaultValue()     //0
 
-function check(x?: Int, y?: Int) : Int? {
+function checkValue(x?: Int, y?: Int) : Int? {
     return x ?& y ?& x + y; //check none
 }
-default(1, 1) //2
-default(1)    //none
-default()     //none
+checkValue(1, 1) //2
+checkValue(1)    //none
+checkValue()     //none
 ```
 
 The `?|` operator short-circuits on non-none values while the `?&` operator short-circuits on none values.
@@ -1250,7 +1447,65 @@ else {
 
 ## <a name="6.4-Structured-Declaration-and-Assignment"></a>6.4 Structured Declaration and Assignment
 
-**[Not Implemented Yet]**
+In addition to single variable declarations and assignments the Bosque language also supports de-structuring values with declaration/assignment to multiple variables simultaneously.
+
+```none
+@[var x: Int, var y: Int] = @[1, 2];               //declare and assign x=1, y=2 (explicit types)
+@{f=var x, g=var y} = @{f=1, g=2};                 //declare and assign x=1, y=2 (infer types)
+@{f=var x, g=@[var y, var z]} = @{f=1, g=@[2, 3]}; //declare x=1, y=2, and z=3
+```
+
+Just as with single variable declaration, variables can be declared as mutable:
+
+```none
+@[var! x, var! y] = @[1, 2]; //declare and assign x=1, y=2 (mutable)
+@[var! x, var y] = @[1, 2];  //declare and assign x=1, y=2 (x is mutable but y is not)
+```
+
+Since including `var` or `var!` for each variable is often redundant and cluttered you can do a single global declaration for all variables in the assignment:
+
+```none
+var @{f=x, g=y} = @{f=1, g=2};  //declare and assign x=1, y=2
+var! @{f=x, g=y} = @{f=1, g=2}; //declare and assign x=1, y=2 (mutable)
+```
+
+In addition to declaration variables can also be updated as part of a structured assignment:
+
+```none
+var! x: Int;
+var! y: Int;
+@{f=x, g=y} = @{f=1, g=2}; //assign x=1, y=2
+```
+
+It is possible to mix declarations and assignments:
+
+```none
+var! x: Int;
+@[x, var y] = @[1, 2]; //assign x=1 and declare y=2
+```
+
+Finally, as in many cases there are parts of a structure that are not useful, Bosque provides ways to ignore these values:
+
+```none
+//declare and assign x, y but ignore the h property
+var @{f=x, h=_, g=y} = @{f=1, g=2};
+
+//declare and assign x, y but ignore the h property which must be an Int
+var @{f=x, h=_:Int, g=y} = @{f=1, g=2};
+
+//declare and assign x, y -- since g property is missing y=none
+var @{f=x, g=y?: Int} = @{f=1};
+
+//declare and assign x, y -- since g property is missing y=none
+var @{f=x, g=y?: Int} = @{f=1};
+
+//declare and assign x -- ignore optional g property
+var @{f=x, g=_?} = @{f=1};
+
+//declare and assign x -- ignore any other tuple values
+var @[x, ...] = @[1, 2, 3];
+
+```
 
 ## <a name="6.5-Return-and-Yield"></a>6.5 Return and Yield
 

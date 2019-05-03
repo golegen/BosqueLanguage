@@ -62,7 +62,7 @@ entity String[unique T] provides Some {
 
     method toUntyped(): String # string_tountyped
 
-    method length(): Int # string_length 
+    method length(): Int # string_length
 
     method startsWith(str: String): Bool # string_startsWith
     method endsWith(str: String): Bool # string_endsWith
@@ -71,6 +71,11 @@ entity String[unique T] provides Some {
     method replace(str: String, with: String): String # string_replace
     method trim(): String # string_trim
     method split(token: String): List[String] # string_split
+
+    // Useful string methods
+    method reverse(): String # string_reverse
+    method upperCase(): String # string_upperCase
+    method lowerCase(): String # string_lowerCase
 
     static concat(...args: List[String]): String # string_concat
 
@@ -87,7 +92,7 @@ entity Float provides Some, Parsable {
 
     const e: Float = '2.718281828459045'@Float;
     const pi: Float = '3.141592653589793'@Float;
-                
+
     method isNan(): Bool # float_isnan
     method isInfinity(): Bool # float_isinfinity
 
@@ -101,15 +106,31 @@ entity Float provides Some, Parsable {
     static div(v1: Float, v2: Float): Float # float_div
 }
 
+//<summary>Math helpers</summary>
+entity Math {
+    static abs(n: Float): Float # math_abs
+    static atan(x: Float): Float # math_atan
+    static atan2(y: Float, x: Float): Float # math_atan2
+    static ceil(n: Float): Float # math_ceil
+    static cos(x: Float): Float # math_cos
+    static floor(n: Float): Float # math_floor
+    static log(n: Float): Float # math_log
+    static pow(b: Float, e: Float): Float # math_pow
+    static round(n: Float): Float # math_round
+    static sin(x: Float): Float # math_sin
+    static sqrt(x: Float): Float # math_sqrt
+    static tan(x: Float): Float # math_tan
+}
+
 //<summary>Primitive regex value.</summary>
 entity Regex provides Some, Parsable {
     override static tryParse(str: String): Regex # regex_tryparse
 
     method match(str: String, start?: Int, end?: Int): {start: Int, end: Int} | None # regex_match
 
-    // 
+    //
     //TODO: this is pretty boring right now
-    // 
+    //
 }
 
 //<summary>All actual tuples implicitly provide this concept.</summary>
@@ -157,8 +178,3 @@ typedef Predicate[T] = fn(_: T) -> Bool;
 
 //<summary>Shorthand for transform function types.</summary>
 typedef Transform[T, U] = fn(_: T) -> U;
-
-
-
-
-

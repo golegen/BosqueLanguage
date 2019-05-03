@@ -816,7 +816,7 @@ class Assembly {
         const lname = t.nameSpace + "::" + t.baseName;
         const nsd = this.getNamespace(t.nameSpace);
         if (!nsd.typeDefs.has(lname)) {
-            if (t.nameSpace === "NSCore" && t.baseName === "String" && !binds.has("T")) {
+            if (t.nameSpace === "NSCore" && t.baseName === "String" && t.terms.length === 0) {
                 return [new NominalTypeSignature(t.nameSpace, t.baseName, [new TemplateTypeSignature("T")]), new Map<string, ResolvedType>(binds).set("T", this.getSpecialAnyType())];
             }
             else {

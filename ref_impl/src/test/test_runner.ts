@@ -4,6 +4,10 @@
 //-------------------------------------------------------------------------------------------------------
 
 import * as BasicExpresion from "./basic_evaluation_test";
+import * as Libraries from "./library_tests";
+import * as Regressions from "./regression_tests";
+
+import * as Apps from "./app_tests";
 
 import * as FS from "fs";
 import chalk from "chalk";
@@ -146,10 +150,17 @@ function runAll() {
     runner.addSet(BasicExpresion.testExpression);
     runner.addSet(BasicExpresion.testStatement);
 
+    runner.addSet(Libraries.testCoreLibs);
+    runner.addSet(Libraries.testCollectionLibs);
+
+    runner.addSet(Regressions.testRegression);
+
+    Apps.tests.forEach((test) => runner.addSet(test));
+
     runner.run();
 }
 
-export { runAll, TestInfo };
+export { runAll, TestInfo, TestSet };
 
 ////
 //Entrypoint

@@ -546,7 +546,7 @@ enum StatementTag {
 
     VariableDeclarationStatement = "VariableDeclarationStatement",
     VariableAssignmentStatement = "VariableAssignmentStatement",
-    //    StructuredVariableAssignmentStatement,
+    StructuredVariableAssignmentStatement = "StructuredVariableAssignmentStatement",
 
     ReturnStatement = "ReturnStatement",
     YieldStatement = "YieldStatement",
@@ -556,6 +556,8 @@ enum StatementTag {
 
     AssertStatement = "AssertStatement", //assert(x > 0)
     CheckStatement = "CheckStatement", //check(x > 0)
+
+    DebugStatement = "DebugStatement", //print an arg or if empty attach debugger
 
     BlockStatement = "BlockStatement"
 }
@@ -608,6 +610,88 @@ class VariableAssignmentStatement extends Statement {
     }
 }
 
+class StructuredAssignment {
+}
+
+class IgnoreTermStructuredAssignment extends StructuredAssignment {
+    readonly isOptional: boolean;
+    readonly termType: TypeSignature;
+
+    constructor(isOptional: boolean, termType: TypeSignature) {
+        super();
+        this.isOptional = isOptional;
+        this.termType = termType;
+    }
+}
+
+class ConstValueStructuredAssignment extends StructuredAssignment {
+    readonly constValue: Expression; //this should always be a constant evaluateable expression (literal, const, statics only)
+
+    constructor(constValue: Expression) {
+        super();
+        this.constValue = constValue;
+    }
+}
+
+class VariableDeclarationStructuredAssignment extends StructuredAssignment {
+    readonly isOptional: boolean
+    readonly vname: string;
+    readonly isConst: boolean;
+    readonly vtype: TypeSignature;
+
+    constructor(isOptional: boolean, vname: string, isConst: boolean, vtype: TypeSignature) {
+        super();
+        this.isOptional = isOptional;
+        this.vname = vname;
+        this.isConst = isConst;
+        this.vtype = vtype;
+    }
+}
+
+class VariableAssignmentStructuredAssignment extends StructuredAssignment {
+    readonly isOptional: boolean;
+    readonly vname: string;
+
+    constructor(isOptional: boolean, vname: string) {
+        super();
+        this.isOptional = isOptional;
+        this.vname = vname;
+    }
+}
+
+class TupleStructuredAssignment extends StructuredAssignment {
+    readonly assigns: StructuredAssignment[];
+    readonly isOpen: boolean;
+
+    constructor(assigns: StructuredAssignment[], isOpen: boolean) {
+        super();
+        this.assigns = assigns;
+        this.isOpen = isOpen;
+    }
+}
+
+class RecordStructuredAssignment extends StructuredAssignment {
+    readonly assigns: [string, StructuredAssignment][];
+    readonly isOpen: boolean;
+
+    constructor(assigns: [string, StructuredAssignment][], isOpen: boolean) {
+        super();
+        this.assigns = assigns;
+        this.isOpen = isOpen;
+    }
+}
+
+class StructuredVariableAssignmentStatement extends Statement {
+    readonly assign: StructuredAssignment;
+    readonly exp: Expression;
+
+    constructor(sinfo: SourceInfo, assign: StructuredAssignment, exp: Expression) {
+        super(StatementTag.StructuredVariableAssignmentStatement, sinfo);
+        this.assign = assign;
+        this.exp = exp;
+    }
+}
+
 class ReturnStatement extends Statement {
     readonly value: Expression;
 
@@ -653,6 +737,15 @@ class CheckStatement extends Statement {
     }
 }
 
+class DebugStatement extends Statement {
+    readonly value: Expression | undefined;
+
+    constructor(sinfo: SourceInfo, value: Expression | undefined) {
+        super(StatementTag.DebugStatement, sinfo);
+        this.value = value;
+    }
+}
+
 class BlockStatement extends Statement {
     readonly statements: Statement[];
 
@@ -687,7 +780,8 @@ export {
     NonecheckExpression, CoalesceExpression, SelectExpression,
     StatementTag, Statement, InvalidStatement, EmptyStatement,
     VariableDeclarationStatement, VariableAssignmentStatement,
+    StructuredAssignment, IgnoreTermStructuredAssignment, ConstValueStructuredAssignment, VariableDeclarationStructuredAssignment, VariableAssignmentStructuredAssignment, TupleStructuredAssignment, RecordStructuredAssignment, StructuredVariableAssignmentStatement,
     ReturnStatement, YieldStatement,
-    IfElseStatement, AssertStatement, CheckStatement, BlockStatement,
-    BodyImplementation
+    IfElseStatement, AssertStatement, CheckStatement, DebugStatement,
+    BlockStatement, BodyImplementation
 };

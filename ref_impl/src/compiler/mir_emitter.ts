@@ -4,7 +4,7 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { SourceInfo, Parser } from "../ast/parser";
-import { MIRTempRegister, MIROp, MIRLoadConst, MIRConstantNone, MIRConstantTrue, MIRConstantFalse, MIRConstantInt, MIRConstantString, MIRLoadConstTypedString, MIRTypeKey, MIRAccessNamespaceConstant, MIRAccessConstField, MIRConstKey, MIRAccessCapturedVariable, MIRAccessArgVariable, MIRAccessLocalVariable, MIRArgument, MIRLambdaKey, MIRFunctionKey, MIRStaticKey, MIRConstructorPrimary, MIRConstructorPrimaryCollectionSingletons, MIRConstructorPrimaryCollectionCopies, MIRConstructorPrimaryCollectionMixed, MIRMethodKey, MIRGlobalKey, MIRAccessFromIndex, MIRProjectFromIndecies, MIRProjectFromProperties, MIRProjectFromFields, MIRAccessFromProperty, MIRAccessFromField, MIRConstructorTuple, MIRConstructorRecord, MIRConstructorPrimaryCollectionEmpty, MIRCallKey, MIRResolvedTypeKey, MIRFieldKey, MIRLoadFieldDefaultValue, MIRConstructorLambda, MIRCallNamespaceFunction, MIRCallStaticFunction, MIRProjectFromTypeTuple, MIRProjectFromTypeRecord, MIRProjectFromTypeConcept, MIRModifyWithIndecies, MIRModifyWithProperties, MIRModifyWithFields, MIRStructuredExtendTuple, MIRStructuredExtendRecord, MIRStructuredExtendObject, MIRInvokeKnownTarget, MIRVirtualMethodKey, MIRInvokeVirtualTarget, MIRCallLambda, MIRJump, MIRJumpCond, MIRPrefixOp, MIRBinOp, MIRBinCmp, MIRBinEq, MIRRegAssign, MIRVarStore, MIRReturnAssign, MIRVarLifetimeStart, MIRVarLifetimeEnd, MIRBody, MIRAssert, MIRCheck, MIRBasicBlock, MIRTruthyConvert, MIRJumpNone } from "./mir_ops";
+import { MIRTempRegister, MIROp, MIRLoadConst, MIRConstantNone, MIRConstantTrue, MIRConstantFalse, MIRConstantInt, MIRConstantString, MIRLoadConstTypedString, MIRTypeKey, MIRAccessNamespaceConstant, MIRAccessConstField, MIRConstKey, MIRAccessCapturedVariable, MIRAccessArgVariable, MIRAccessLocalVariable, MIRArgument, MIRLambdaKey, MIRFunctionKey, MIRStaticKey, MIRConstructorPrimary, MIRConstructorPrimaryCollectionSingletons, MIRConstructorPrimaryCollectionCopies, MIRConstructorPrimaryCollectionMixed, MIRMethodKey, MIRGlobalKey, MIRAccessFromIndex, MIRProjectFromIndecies, MIRProjectFromProperties, MIRProjectFromFields, MIRAccessFromProperty, MIRAccessFromField, MIRConstructorTuple, MIRConstructorRecord, MIRConstructorPrimaryCollectionEmpty, MIRCallKey, MIRResolvedTypeKey, MIRFieldKey, MIRLoadFieldDefaultValue, MIRConstructorLambda, MIRCallNamespaceFunction, MIRCallStaticFunction, MIRProjectFromTypeTuple, MIRProjectFromTypeRecord, MIRProjectFromTypeConcept, MIRModifyWithIndecies, MIRModifyWithProperties, MIRModifyWithFields, MIRStructuredExtendTuple, MIRStructuredExtendRecord, MIRStructuredExtendObject, MIRInvokeKnownTarget, MIRVirtualMethodKey, MIRInvokeVirtualTarget, MIRCallLambda, MIRJump, MIRJumpCond, MIRPrefixOp, MIRBinOp, MIRBinCmp, MIRBinEq, MIRRegAssign, MIRVarStore, MIRReturnAssign, MIRVarLifetimeStart, MIRVarLifetimeEnd, MIRBody, MIRAssert, MIRCheck, MIRBasicBlock, MIRTruthyConvert, MIRJumpNone, MIRDebug } from "./mir_ops";
 import { OOPTypeDecl, StaticFunctionDecl, MemberMethodDecl, InvokeDecl, Assembly, NamespaceFunctionDecl, NamespaceConstDecl, StaticMemberDecl, ConceptTypeDecl, EntityTypeDecl } from "../ast/assembly";
 import { ResolvedType, ResolvedEntityAtomType, ResolvedConceptAtomType, ResolvedTupleAtomType, ResolvedRecordAtomType, ResolvedFunctionAtomType, ResolvedConceptAtomTypeEntry } from "../ast/resolved_type";
 import { PackageConfig, MIRAssembly, MIRType, MIRTypeOption, MIRFunctionType, MIRFunctionParameter, MIREntityType, MIRConceptType, MIRTupleTypeEntry, MIRTupleType, MIRRecordTypeEntry, MIRRecordType } from "./mir_assembly";
@@ -339,6 +339,14 @@ class MIRBodyEmitter {
         this.m_currentBlock.push(new MIRCheck(sinfo, cond));
     }
 
+    emitDebugBreak(sinfo: SourceInfo) {
+        this.m_currentBlock.push(new MIRDebug(sinfo, undefined));
+    }
+
+    emitDebugPrint(sinfo: SourceInfo, value: MIRArgument) {
+        this.m_currentBlock.push(new MIRDebug(sinfo, value));
+    }
+
     emitDirectJump(sinfo: SourceInfo, blck: string) {
         this.m_currentBlock.push(new MIRJump(sinfo, blck));
     }
@@ -386,15 +394,22 @@ class MIREmitter {
             return undefined;
         }
 
-        let resvi: [MIRVirtualMethodKey, MIRMethodKey, OOPTypeDecl, Map<string, ResolvedType>, MemberMethodDecl, Map<string, ResolvedType>][] = [];
+        let resvi = new Map<string, [MIRVirtualMethodKey, MIRMethodKey, OOPTypeDecl, Map<string, ResolvedType>, MemberMethodDecl, Map<string, ResolvedType>]>();
         for (let i = 0; i < this.allVInvokes.length; ++i) {
             const vinv = this.allVInvokes[i];
 
             const vcpt = ResolvedType.createSingle(ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(vinv[2] as ConceptTypeDecl, vinv[3])]));
             const impls = this.entityInstantiationInfo.filter((iinfo) => {
-                const itype = ResolvedType.createSingle(ResolvedEntityAtomType.create(iinfo[1] as EntityTypeDecl, iinfo[2]));
-                return assembly.subtypeOf(itype, vcpt);
-            });
+                    if(iinfo[1] instanceof EntityTypeDecl) {
+                        const etype = ResolvedType.createSingle(ResolvedEntityAtomType.create(iinfo[1] as EntityTypeDecl, iinfo[2]));
+                        return assembly.subtypeOf(etype, vcpt);
+                    }
+                    else {
+                        const cpt = ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(iinfo[1] as ConceptTypeDecl, iinfo[2])]);
+                        const ctype = ResolvedType.createSingle(cpt)
+                        return assembly.subtypeOf(ctype, vcpt);
+                    }
+                });
 
             for (let j = 0; j < impls.length; ++j) {
                 const impl = impls[j];
@@ -405,12 +420,17 @@ class MIREmitter {
                     const binds = new Map<string, ResolvedType>(mcreate.binds);
                     vinv[5].forEach((v, k) => binds.set(k, v));
 
-                    const vci: [MIRVirtualMethodKey, MIRMethodKey, OOPTypeDecl, Map<string, ResolvedType>, MemberMethodDecl, Map<string, ResolvedType>] = [vinv[0], vinv[1], mcreate.contiainingType, mcreate.binds, mcreate.decl as MemberMethodDecl, binds as Map<string, ResolvedType>];
-                    resvi.push(vci);
+                    if (!resvi.has(vinv[1])) {
+                        resvi.set(vinv[1], [vinv[0], vinv[1], mcreate.contiainingType, mcreate.binds, mcreate.decl as MemberMethodDecl, binds as Map<string, ResolvedType>]);
+                    }
                 }
             }
         }
-        return resvi;
+
+        let fres: [MIRVirtualMethodKey, MIRMethodKey, OOPTypeDecl, Map<string, ResolvedType>, MemberMethodDecl, Map<string, ResolvedType>][] = [];
+        resvi.forEach((v, k) => fres.push(v));
+
+        return fres;
     }
 
     registerTypeInstantiation(decl: OOPTypeDecl, binds: Map<string, ResolvedType>) {
@@ -583,6 +603,7 @@ class MIREmitter {
         ////////////////
         //While there is more to process get an item and run the checker on it
         try {
+            let lastVCount = 0;
             while (true) {
                 while (emitter.pendingOOProcessing.length !== 0 ||
                     emitter.pendingGlobalProcessing.length !== 0 || emitter.pendingConstProcessing.length !== 0 ||
@@ -628,9 +649,10 @@ class MIREmitter {
 
                 //make sure all vcall candidates are processed
                 const vcgens = emitter.getVCallInstantiations(assembly);
-                if (vcgens === undefined) {
+                if (vcgens === undefined || vcgens.length === lastVCount) {
                     break;
                 }
+                lastVCount = vcgens.length;
 
                 for (let i = 0; i < vcgens.length; ++i) {
                     checker.processMethodFunction(...vcgens[i]);

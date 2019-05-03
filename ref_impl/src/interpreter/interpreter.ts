@@ -4,9 +4,9 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { Value, TypedStringValue, EntityValueSimple, ValueOps, ListValue, TreeSetValue, TreeMapValue, TupleValue, RecordValue, LambdaValue } from "./value";
-import { Environment, PrePostError, raiseRuntimeError, FunctionScope, InvariantError } from "./interpreter_environment";
+import { Environment, PrePostError, raiseRuntimeError, FunctionScope, InvariantError, NotImplementedRuntimeError } from "./interpreter_environment";
 import { MIRAssembly, MIRTupleType, MIRTupleTypeEntry, MIRRecordTypeEntry, MIRRecordType, MIREntityType, MIREntityTypeDecl, MIRFieldDecl, MIROOTypeDecl, MIRType, MIRGlobalDecl, MIRConstDecl, MIRFunctionDecl, MIRStaticDecl, MIRConceptTypeDecl, MIRMethodDecl, MIRInvokeDecl, MIRFunctionType } from "../compiler/mir_assembly";
-import { MIRBody, MIROp, MIROpTag, MIRLoadConst, MIRArgument, MIRTempRegister, MIRRegisterArgument, MIRConstantTrue, MIRConstantString, MIRConstantInt, MIRConstantNone, MIRConstantFalse, MIRLoadConstTypedString, MIRAccessNamespaceConstant, MIRAccessConstField, MIRLoadFieldDefaultValue, MIRAccessCapturedVariable, MIRAccessArgVariable, MIRAccessLocalVariable, MIRConstructorPrimary, MIRConstructorPrimaryCollectionEmpty, MIRConstructorPrimaryCollectionSingletons, MIRConstructorPrimaryCollectionCopies, MIRConstructorPrimaryCollectionMixed, MIRConstructorTuple, MIRConstructorRecord, MIRConstructorLambda, MIRCallNamespaceFunction, MIRCallStaticFunction, MIRAccessFromIndex, MIRProjectFromIndecies, MIRAccessFromProperty, MIRAccessFromField, MIRProjectFromProperties, MIRProjectFromFields, MIRProjectFromTypeTuple, MIRProjectFromTypeRecord, MIRProjectFromTypeConcept, MIRModifyWithIndecies, MIRModifyWithProperties, MIRModifyWithFields, MIRStructuredExtendTuple, MIRStructuredExtendRecord, MIRStructuredExtendObject, MIRInvokeKnownTarget, MIRInvokeVirtualTarget, MIRCallLambda, MIRPrefixOp, MIRBinOp, MIRBinCmp, MIRBinEq, MIRRegAssign, MIRVarStore, MIRReturnAssign, MIRJump, MIRJumpCond, MIRJumpNone, MIRVarLifetimeStart, MIRVarLifetimeEnd, MIRCheck, MIRAssert, MIRTruthyConvert } from "../compiler/mir_ops";
+import { MIRBody, MIROp, MIROpTag, MIRLoadConst, MIRArgument, MIRTempRegister, MIRRegisterArgument, MIRConstantTrue, MIRConstantString, MIRConstantInt, MIRConstantNone, MIRConstantFalse, MIRLoadConstTypedString, MIRAccessNamespaceConstant, MIRAccessConstField, MIRLoadFieldDefaultValue, MIRAccessCapturedVariable, MIRAccessArgVariable, MIRAccessLocalVariable, MIRConstructorPrimary, MIRConstructorPrimaryCollectionEmpty, MIRConstructorPrimaryCollectionSingletons, MIRConstructorPrimaryCollectionCopies, MIRConstructorPrimaryCollectionMixed, MIRConstructorTuple, MIRConstructorRecord, MIRConstructorLambda, MIRCallNamespaceFunction, MIRCallStaticFunction, MIRAccessFromIndex, MIRProjectFromIndecies, MIRAccessFromProperty, MIRAccessFromField, MIRProjectFromProperties, MIRProjectFromFields, MIRProjectFromTypeTuple, MIRProjectFromTypeRecord, MIRProjectFromTypeConcept, MIRModifyWithIndecies, MIRModifyWithProperties, MIRModifyWithFields, MIRStructuredExtendTuple, MIRStructuredExtendRecord, MIRStructuredExtendObject, MIRInvokeKnownTarget, MIRInvokeVirtualTarget, MIRCallLambda, MIRPrefixOp, MIRBinOp, MIRBinCmp, MIRBinEq, MIRRegAssign, MIRVarStore, MIRReturnAssign, MIRJump, MIRJumpCond, MIRJumpNone, MIRVarLifetimeStart, MIRVarLifetimeEnd, MIRCheck, MIRAssert, MIRTruthyConvert, MIRDebug } from "../compiler/mir_ops";
 
 import * as assert from "assert";
 import { BuiltinCalls, BuiltinCallSig } from "./builtins";
@@ -597,8 +597,12 @@ class Interpreter {
             }
             case MIROpTag.MIRInvokeVirtualTarget: {
                 const invk = op as MIRInvokeVirtualTarget;
-                const tvalue = this.getArgValue(fscope, invk.self) as EntityValueSimple;
-                const fdecl = (this.m_env.assembly.entityMap.get(tvalue.etype.ekey) as MIREntityTypeDecl).vcallMap.get(invk.vresolve) as MIRMethodDecl;
+                const tvalue = this.getArgValue(fscope, invk.self);
+                const ttype = ValueOps.getValueType(tvalue).options[0] as MIREntityType;
+
+                const edecl = this.m_env.assembly.entityMap.get(ttype.ekey) as MIREntityTypeDecl;
+                const fdecl = edecl.vcallMap.get(invk.vresolve) as MIRMethodDecl;
+
                 let args = new Map<string, Value>().set("this", tvalue);
                 for (let i = 1; i < fdecl.invoke.params.length; ++i) {
                     args.set(fdecl.invoke.params[i].name, this.getArgValue(fscope, invk.args[i]));
@@ -711,6 +715,17 @@ class Interpreter {
                 const chk = op as MIRCheck;
                 if (!this.getArgValue(fscope, chk.cond)) {
                     raiseRuntimeError();
+                }
+                break;
+            }
+            case MIROpTag.MIRDebug: {
+                const dbg = op as MIRDebug;
+                if (dbg.value === undefined) {
+                    throw new NotImplementedRuntimeError("MIRDebug -- debug attach");
+                }
+                else {
+                    const pval = this.getArgValue(fscope, dbg.value);
+                    console.log(ValueOps.diagnosticPrintValue(pval));
                 }
                 break;
             }
